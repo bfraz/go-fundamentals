@@ -1,12 +1,13 @@
 # go-fundamentals-livestock-farm
 
-Determines valuation of farm and income stream per livestock type on a farm 
+Determines valuation of farm and income stream per livestock type on a farm
 WHILE using go fundamentals such as:
-  - data types & operators 
- - branching/looping 
- - functions 
- - oop 
- - asynchronous programming 
+
+ - data types & operators
+ - branching/looping
+ - functions
+ - oop
+ - asynchronous programming
 
 
 
