@@ -4,10 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+  "runtime"
 )
 
 func main() {
-
+  runtime.GOMAXPROCS(4)
   fields := []Field{
     Field{"West80",active, sheep, 350, 100, 80},
     Field{"Berket80",active, cow, 25, 12, 80},
@@ -17,30 +18,36 @@ func main() {
 
   farm := Farm{fields}
 
-  input, err := getInput();
-	if err == nil {
-		fmt.Println("")
+  ch := make(chan bool, 1)
+  ch <- true
+	for range ch {
+  	if input, err := getInput(); err == nil {
+  		fmt.Println("")
 
-		switch input {
-		case "1":
-      animalCache := newAnimalCache()
-      farm.generateSalesOffspringReport(animalCache)
-		case "2":
-      animalCache := newAnimalCache()
-      farm.generateOperatingReport(animalCache)
-    case "3":
-      farm.generateFarmReport()
-		}
-	} else {
-		fmt.Println(err.Error())
-	}
+  		switch input {
+  		case "1":
+        animalCache := newAnimalCache()
+        go farm.generateSalesOffspringReport(animalCache, ch)
+  		case "2":
+        animalCache := newAnimalCache()
+        go farm.generateOperatingReport(animalCache, ch)
+      case "3":
+        go farm.generateFarmReport(ch)
+  		}
+  	} else {
+  		fmt.Println(err.Error())
+      close(ch)
+  	}
+    <- ch
+  }
+
 }
 
 func getInput() (option string, err error) {
 	fmt.Println("1) Generate Sales Offspring Report")
 	fmt.Println("2) Generate Operating Report")
   fmt.Println("3) Generate Farm Report")
-	fmt.Print("Please choose an option: ")
+	fmt.Println("Please choose an option: ")
 
 	fmt.Scanln(&option)
 
@@ -99,7 +106,7 @@ type Farm struct {
   fields []Field
 }
 
-func (f *Farm) generateSalesOffspringReport(animalCache AnimalCache) {
+func (f *Farm) generateSalesOffspringReport(animalCache AnimalCache, ch chan bool) {
   farmOffspringPotentialSales := 0.
 
 	for _, field := range f.fields {
@@ -119,10 +126,12 @@ func (f *Farm) generateSalesOffspringReport(animalCache AnimalCache) {
   fmt.Println(farmTitle)
   fmt.Println(strings.Repeat("-", len(farmTitle)))
   fmt.Println("$", farmOffspringPotentialSales)
+  ch <- true
+  close(ch)
 }
 
 
-func (f *Farm) generateFarmReport(){
+func (f *Farm) generateFarmReport(ch chan bool){
   for _, field := range f.fields {
     title := fmt.Sprintf("Field Name %s:", field.name)
     fmt.Println(title)
@@ -138,9 +147,11 @@ func (f *Farm) generateFarmReport(){
     }
     fmt.Println("")
   }
+  ch <- true
+  close(ch)
 }
 
-func (f *Farm) generateOperatingReport(animalCache AnimalCache) {
+func (f *Farm) generateOperatingReport(animalCache AnimalCache, ch chan bool) {
 	farmAverageUtilization := 0.
 	for _, field := range f.fields {
     fieldUtilization := 0.
@@ -162,4 +173,6 @@ func (f *Farm) generateOperatingReport(animalCache AnimalCache) {
 	fmt.Println(farmTitle)
 	fmt.Println(strings.Repeat("-", len(farmTitle)))
 	fmt.Printf("Farm Operating Utilization: %.0f%s\n", farmAverageUtilization, "%")
+  ch <- true
+  close(ch)
 }
